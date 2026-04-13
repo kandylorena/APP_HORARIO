@@ -4,14 +4,14 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Agenda USACH - Pedagogía</title>
-    <link rel="stylesheet" href="./assets/css/styles.css?v=1.7">
+    <link rel="stylesheet" href="./assets/css/styles.css?v=1.8">
 </head>
 <body>
     <div class="app-container">
         <header class="usach-header">
             <h1>Agenda USACH</h1>
             <p>Pedagogía en Educación General Básica</p>
-            <button id="btn-permiso" class="btn-alert">🔔 Activar Alertas de Navegador</button>
+            <button id="btn-permiso" class="btn-alert">🔔 Activar Alertas</button>
         </header>
 
         <main>
@@ -58,9 +58,20 @@
                 <input type="text" id="sala-item" placeholder="Sala (Ej: EAO 102)">
                 
                 <div class="form-buttons">
-                    <button id="btn-guardar" class="btn-primary">Guardar en Agenda</button>
+                    <button id="btn-guardar" class="btn-primary">Guardar Registro</button>
                     <button id="btn-cancelar" class="btn-cancel" style="display:none;">Cancelar Edición</button>
                 </div>
+            </section>
+
+            <section class="card">
+                <h3>🎨 Pizarra de Notas Rápidas</h3>
+                <div class="canvas-tools">
+                    <input type="color" id="color-picker" value="#004a87">
+                    <input type="range" id="brush-size" min="1" max="15" value="5">
+                    <button id="btn-limpiar" class="btn-action">Borrar</button>
+                    <button id="btn-descargar" class="btn-action">💾 PNG</button>
+                </div>
+                <canvas id="pizarra" width="500" height="300"></canvas>
             </section>
 
             <section class="card">
@@ -76,7 +87,7 @@
             </section>
 
             <section class="card">
-                <h2>📅 Próximos Eventos</h2>
+                <h2>📅 Recordatorios</h2>
                 <div id="lista-recordatorios"></div>
             </section>
         </main>
