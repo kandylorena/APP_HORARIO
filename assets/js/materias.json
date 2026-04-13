@@ -1,0 +1,9 @@
+{
+    "horario": [
+        {"id": 1, "dia": 1, "hora": "08:00", "materia": "Pensamiento Matemático I", "sala": "EAO"},
+        {"id": 2, "dia": 1, "hora": "11:20", "materia": "Taller de Práctica I", "sala": "VIME"},
+        {"id": 3, "dia": 2, "hora": "09:40", "materia": "Psicología del Aprendizaje", "sala": "Pabellón Forma"},
+        {"id": 4, "dia": 3, "hora": "08:00", "materia": "Gramática y Ortografía", "sala": "Sala 302"},
+        {"id": 5, "dia": 4, "hora": "15:20", "materia": "Antropología Filosófica", "sala": "L1"}
+    ]
+}

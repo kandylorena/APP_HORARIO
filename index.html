@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Agenda USACH - Pedagogía</title>
+    <link rel="stylesheet" href="./assets/css/styles.css?v=1.7">
+</head>
+<body>
+    <div class="app-container">
+        <header class="usach-header">
+            <h1>Agenda USACH</h1>
+            <p>Pedagogía en Educación General Básica</p>
+            <button id="btn-permiso" class="btn-alert">🔔 Activar Alertas de Navegador</button>
+        </header>
+
+        <main>
+            <section class="card form-card">
+                <h3 id="form-title">➕ Nuevo Registro</h3>
+                <input type="hidden" id="edit-id">
+                
+                <select id="item-tipo-registro">
+                    <option value="clase">Clase Semanal</option>
+                    <option value="recordatorio">Recordatorio (Examen/Tarea)</option>
+                </select>
+                
+                <label>Materia:</label>
+                <input type="text" id="nombre-item" list="materias-usach" placeholder="Busca tu ramo...">
+                <datalist id="materias-usach">
+                    <option value="Pensamiento Matemático I">
+                    <option value="Gramática y Ortografía">
+                    <option value="Psicología del Aprendizaje">
+                    <option value="Taller de Práctica I">
+                    <option value="Ciencias Naturales y su Didáctica">
+                    <option value="Historia de Chile y su Didáctica">
+                </datalist>
+                
+                <div id="campos-clase">
+                    <label>Día de la semana:</label>
+                    <select id="dia-semana">
+                        <option value="1">Lunes</option>
+                        <option value="2">Martes</option>
+                        <option value="3">Miércoles</option>
+                        <option value="4">Jueves</option>
+                        <option value="5">Viernes</option>
+                        <option value="6">Sábado</option>
+                    </select>
+                </div>
+
+                <div id="campos-recordatorio" style="display:none;">
+                    <label>Fecha del evento:</label>
+                    <input type="date" id="fecha-item">
+                </div>
+
+                <label>Hora:</label>
+                <input type="time" id="hora-item">
+                
+                <input type="text" id="sala-item" placeholder="Sala (Ej: EAO 102)">
+                
+                <div class="form-buttons">
+                    <button id="btn-guardar" class="btn-primary">Guardar en Agenda</button>
+                    <button id="btn-cancelar" class="btn-cancel" style="display:none;">Cancelar Edición</button>
+                </div>
+            </section>
+
+            <section class="card">
+                <div class="header-lista">
+                    <h2>🕒 Horario</h2>
+                    <div class="view-selector">
+                        <button onclick="cambiarVista('dia')" id="btn-dia" class="view-btn active">Hoy</button>
+                        <button onclick="cambiarVista('semana')" id="btn-semana" class="view-btn">Semana</button>
+                        <button onclick="cambiarVista('semestre')" id="btn-semestre" class="view-btn">Todo</button>
+                    </div>
+                </div>
+                <div id="lista-clases"></div>
+            </section>
+
+            <section class="card">
+                <h2>📅 Próximos Eventos</h2>
+                <div id="lista-recordatorios"></div>
+            </section>
+        </main>
+    </div>
+    <script src="./assets/js/app.js" type="module"></script>
+</body>
+</html>
