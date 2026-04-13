@@ -2,96 +2,106 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Agenda USACH - Pedagogía</title>
-    <link rel="stylesheet" href="./assets/css/styles.css?v=1.8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Agenda USACH - Pro</title>
+    <link rel="stylesheet" href="./assets/css/styles.css">
+    <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
+    <canvas id="pizarra-fondo"></canvas>
+    <div id="toast-container"></div>
+
+    <div class="pizarra-sidebar">
+        <div class="sidebar-icon">🎨</div>
+        <input type="color" id="color-pincel" value="#ffb7c5">
+        <div class="slider-wrapper">
+            <input type="range" id="grosor-pincel" min="1" max="50" value="5">
+        </div>
+        <button id="btn-limpiar-fondo" title="Borrar fondo">✨</button>
+    </div>
+
     <div class="app-container">
-        <header class="usach-header">
-            <h1>Agenda USACH</h1>
-            <p>Pedagogía en Educación General Básica</p>
-            <button id="btn-permiso" class="btn-alert">🔔 Activar Alertas</button>
+        <header class="main-header">
+            <h1 class="titulo-premium">Agenda <span>USACH</span></h1>
+            <p>Pedagogía en Educación Básica</p>
+            <button id="btn-permiso" class="btn-notif">🔔 Activar Notificaciones</button>
         </header>
 
         <main>
-            <section class="card form-card">
-                <h3 id="form-title">➕ Nuevo Registro</h3>
+            <section class="glass-card">
+                <h3 id="form-title">🌸 Registrar Actividad</h3>
                 <input type="hidden" id="edit-id">
                 
-                <select id="item-tipo-registro">
-                    <option value="clase">Clase Semanal</option>
-                    <option value="recordatorio">Recordatorio (Examen/Tarea)</option>
-                </select>
-                
-                <label>Materia:</label>
-                <input type="text" id="nombre-item" list="materias-usach" placeholder="Busca tu ramo...">
-                <datalist id="materias-usach">
-                    <option value="Pensamiento Matemático I">
-                    <option value="Gramática y Ortografía">
-                    <option value="Psicología del Aprendizaje">
-                    <option value="Taller de Práctica I">
-                    <option value="Ciencias Naturales y su Didáctica">
-                    <option value="Historia de Chile y su Didáctica">
-                </datalist>
-                
-                <div id="campos-clase">
-                    <label>Día de la semana:</label>
-                    <select id="dia-semana">
-                        <option value="1">Lunes</option>
-                        <option value="2">Martes</option>
-                        <option value="3">Miércoles</option>
-                        <option value="4">Jueves</option>
-                        <option value="5">Viernes</option>
-                        <option value="6">Sábado</option>
+                <div class="form-row">
+                    <select id="item-tipo-registro">
+                        <option value="clase">Clase Semanal</option>
+                        <option value="recordatorio">Evento / Examen / Tarea</option>
                     </select>
                 </div>
 
-                <div id="campos-recordatorio" style="display:none;">
-                    <label>Fecha del evento:</label>
-                    <input type="date" id="fecha-item">
+                <div class="form-row">
+                    <input type="text" id="nombre-item" list="materias-sugeridas" placeholder="Escribe el nombre aquí...">
+                    <datalist id="materias-sugeridas">
+                        <option value="Pensamiento Matemático I">
+                        <option value="Psicología del Aprendizaje">
+                        <option value="Taller de Práctica I">
+                        <option value="Gramática y Ortografía">
+                        <option value="Ciencias Naturales">
+                        <option value="Evaluación Educativa">
+                    </datalist>
                 </div>
 
-                <label>Hora:</label>
-                <input type="time" id="hora-item">
+                <div id="campos-clase" class="form-grid">
+                    <select id="dia-semana">
+                        <option value="1">Lunes</option><option value="2">Martes</option>
+                        <option value="3">Miércoles</option><option value="4">Jueves</option>
+                        <option value="5">Viernes</option><option value="6">Sábado</option>
+                        <option value="0">Domingo</option>
+                    </select>
+                    <input type="time" id="hora-item">
+                </div>
+
+                <div id="campos-recordatorio" class="form-grid" style="display:none;">
+                    <input type="date" id="fecha-item">
+                    <input type="time" id="hora-item-rec">
+                </div>
+
+                <input type="text" id="sala-item" placeholder="Sala, Lugar o Detalles" class="input-full">
                 
-                <input type="text" id="sala-item" placeholder="Sala (Ej: EAO 102)">
-                
-                <div class="form-buttons">
-                    <button id="btn-guardar" class="btn-primary">Guardar Registro</button>
+                <div class="form-actions">
+                    <button id="btn-guardar" class="btn-save">Guardar Registro</button>
                     <button id="btn-cancelar" class="btn-cancel" style="display:none;">Cancelar Edición</button>
                 </div>
             </section>
 
-            <section class="card">
-                <h3>🎨 Pizarra de Notas Rápidas</h3>
-                <div class="canvas-tools">
-                    <input type="color" id="color-picker" value="#004a87">
-                    <input type="range" id="brush-size" min="1" max="15" value="5">
-                    <button id="btn-limpiar" class="btn-action">Borrar</button>
-                    <button id="btn-descargar" class="btn-action">💾 PNG</button>
-                </div>
-                <canvas id="pizarra" width="500" height="300"></canvas>
-            </section>
-
-            <section class="card">
+            <section class="glass-card">
                 <div class="header-lista">
-                    <h2>🕒 Horario</h2>
+                    <h2>🕒 Horario Semanal</h2>
                     <div class="view-selector">
                         <button onclick="cambiarVista('dia')" id="btn-dia" class="view-btn active">Hoy</button>
                         <button onclick="cambiarVista('semana')" id="btn-semana" class="view-btn">Semana</button>
-                        <button onclick="cambiarVista('semestre')" id="btn-semestre" class="view-btn">Todo</button>
                     </div>
                 </div>
                 <div id="lista-clases"></div>
             </section>
 
-            <section class="card">
-                <h2>📅 Recordatorios</h2>
+            <section class="glass-card">
+                <h2>📅 Pendientes y Alertas</h2>
                 <div id="lista-recordatorios"></div>
+            </section>
+
+            <section class="glass-card">
+                <h3>📝 Pizarra de Notas</h3>
+                <div class="canvas-tools">
+                    <button class="btn-pastel-sm" id="btn-pizarra-texto">⌨️ Texto</button>
+                    <button class="btn-pastel-sm" id="btn-pizarra-borrar">🧹 Limpiar</button>
+                    <button class="btn-pastel-sm" id="btn-pizarra-guardar">💾 Guardar</button>
+                </div>
+                <canvas id="pizarra-notas"></canvas>
+                <div id="notas-guardadas-container" class="notas-grid"></div>
             </section>
         </main>
     </div>
-    <script src="./assets/js/app.js" type="module"></script>
+    <script src="./assets/js/app.js"></script>
 </body>
 </html>

@@ -1,190 +1,144 @@
-// BASE DE DATOS Y ESTADO
-let db = JSON.parse(localStorage.getItem('agenda_usach_v4')) || { clases: [], recordatorios: [] };
+let db = JSON.parse(localStorage.getItem('agenda_usach_v12')) || { clases: [], recordatorios: [], notas: [] };
 let editandoId = null;
 let vistaActual = 'dia';
-let ultimaAlarmaID = "";
 
-// SONIDO
-const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-function sonarAlerta() {
-    const osc = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-    osc.connect(gain); gain.connect(audioCtx.destination);
-    osc.frequency.value = 440; osc.start(); osc.stop(audioCtx.currentTime + 1);
+// --- FONDO DIBUJO ---
+const canF = document.getElementById('pizarra-fondo');
+const ctxF = canF.getContext('2d');
+function res() { canF.width = window.innerWidth; canF.height = window.innerHeight; }
+window.addEventListener('resize', res); res();
+
+let dibF = false;
+const getP = (e) => ({ x: e.clientX || e.touches?.[0].clientX, y: e.clientY || e.touches?.[0].clientY });
+const startF = (e) => { if(e.target.id === 'pizarra-fondo') { dibF = true; ctxF.beginPath(); const p = getP(e); ctxF.moveTo(p.x, p.y); }};
+const moveF = (e) => { if(!dibF) return; const p = getP(e); ctxF.lineWidth = document.getElementById('grosor-pincel').value; ctxF.strokeStyle = document.getElementById('color-pincel').value; ctxF.lineCap = 'round'; ctxF.lineTo(p.x, p.y); ctxF.stroke(); };
+
+window.addEventListener('mousedown', startF); window.addEventListener('mousemove', moveF);
+window.addEventListener('mouseup', () => dibF = false);
+window.addEventListener('touchstart', startF, {passive:false});
+window.addEventListener('touchmove', (e) => { if(dibF) { moveF(e); e.preventDefault(); }}, {passive:false});
+document.getElementById('btn-limpiar-fondo').onclick = () => ctxF.clearRect(0,0,canF.width, canF.height);
+
+// --- TOASTS ---
+function showToast(txt, tipo = 'success') {
+    const cont = document.getElementById('toast-container');
+    const t = document.createElement('div'); t.className = `toast ${tipo}`; t.innerText = txt;
+    cont.appendChild(t);
+    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 2500);
 }
 
-// UI SELECTORES
-const tipoSel = document.getElementById('item-tipo-registro');
-const blockClase = document.getElementById('campos-clase');
-const blockRec = document.getElementById('campos-recordatorio');
+// --- PIZARRA NOTAS ---
+const canN = document.getElementById('pizarra-notas');
+const ctxN = canN.getContext('2d');
+canN.width = canN.offsetWidth; canN.height = 180;
+let dibN = false;
+canN.onmousedown = (e) => { dibN = true; ctxN.beginPath(); ctxN.moveTo(e.offsetX, e.offsetY); };
+canN.onmousemove = (e) => { if(!dibN) return; ctxN.strokeStyle = document.getElementById('color-pincel').value; ctxN.lineWidth = 2; ctxN.lineTo(e.offsetX, e.offsetY); ctxN.stroke(); };
+window.addEventListener('mouseup', () => dibN = false);
 
-tipoSel.addEventListener('change', () => {
-    blockClase.style.display = tipoSel.value === 'clase' ? 'block' : 'none';
-    blockRec.style.display = tipoSel.value === 'recordatorio' ? 'block' : 'none';
-});
+document.getElementById('btn-pizarra-texto').onclick = () => {
+    const t = prompt("Escribe tu nota:"); if(t) { ctxN.font = "18px Quicksand"; ctxN.fillStyle = "#455a64"; ctxN.fillText(t, 10, 50); }
+};
+document.getElementById('btn-pizarra-borrar').onclick = () => ctxN.clearRect(0,0,canN.width, canN.height);
+document.getElementById('btn-pizarra-guardar').onclick = () => {
+    db.notas.push(canN.toDataURL()); save(); renderNotas(); showToast("Nota guardada 💾");
+};
 
-// GUARDAR / EDITAR
+// --- AGENDA LOGICA ---
+const tSel = document.getElementById('item-tipo-registro');
+tSel.onchange = () => {
+    const isC = tSel.value === 'clase';
+    document.getElementById('campos-clase').style.display = isC ? 'grid' : 'none';
+    document.getElementById('campos-recordatorio').style.display = isC ? 'none' : 'grid';
+};
+
 document.getElementById('btn-guardar').onclick = () => {
-    const nombre = document.getElementById('nombre-item').value;
-    const hora = document.getElementById('hora-item').value;
-    if (!nombre || !hora) return alert("Falta Materia o Hora");
+    const nom = document.getElementById('nombre-item').value;
+    if(!nom) return showToast("Escribe un nombre", "alert");
 
     const item = {
         id: editandoId || Date.now(),
-        nombre, hora, tipo: tipoSel.value,
-        sala: document.getElementById('sala-item').value || "S/S",
+        nombre: nom, tipo: tSel.value,
+        sala: document.getElementById('sala-item').value || 'Sin sala',
         dia: document.getElementById('dia-semana').value,
+        hora: tSel.value === 'clase' ? document.getElementById('hora-item').value : document.getElementById('hora-item-rec').value,
         fecha: document.getElementById('fecha-item').value
     };
 
-    if (editandoId) {
+    if(editandoId) {
         db.clases = db.clases.filter(i => i.id !== editandoId);
         db.recordatorios = db.recordatorios.filter(i => i.id !== editandoId);
+        showToast("¡Actualizado!");
+    } else {
+        showToast("¡Guardado! 🌸");
     }
 
-    if (item.tipo === 'clase') db.clases.push(item);
-    else db.recordatorios.push(item);
-
-    localStorage.setItem('agenda_usach_v4', JSON.stringify(db));
-    window.cancelarEdicion();
-    renderizar();
+    if(item.tipo === 'clase') db.clases.push(item); else db.recordatorios.push(item);
+    save(); cancelarEdicion(); renderizar();
 };
 
 window.editar = (id, tipo) => {
-    const lista = tipo === 'clase' ? db.clases : db.recordatorios;
-    const item = lista.find(i => i.id == id);
+    const item = (tipo === 'clase' ? db.clases : db.recordatorios).find(i => i.id == id);
     if(!item) return;
-
     editandoId = id;
     document.getElementById('nombre-item').value = item.nombre;
-    document.getElementById('hora-item').value = item.hora;
     document.getElementById('sala-item').value = item.sala;
-    document.getElementById('item-tipo-registro').value = item.tipo;
-    document.getElementById('dia-semana').value = item.dia || "1";
-    document.getElementById('fecha-item').value = item.fecha || "";
-    
-    tipoSel.dispatchEvent(new Event('change'));
+    tSel.value = item.tipo; tSel.dispatchEvent(new Event('change'));
+    if(item.tipo === 'clase') {
+        document.getElementById('hora-item').value = item.hora;
+        document.getElementById('dia-semana').value = item.dia;
+    } else {
+        document.getElementById('hora-item-rec').value = item.hora;
+        document.getElementById('fecha-item').value = item.fecha;
+    }
     document.getElementById('form-title').innerText = "✏️ Editando...";
     document.getElementById('btn-cancelar').style.display = 'block';
-    window.scrollTo(0,0);
+    window.scrollTo({top: 0, behavior: 'smooth'});
 };
 
-window.cancelarEdicion = () => {
+document.getElementById('btn-cancelar').onclick = () => { cancelarEdicion(); showToast("Cancelado", "alert"); };
+
+function cancelarEdicion() {
     editandoId = null;
-    document.getElementById('nombre-item').value = "";
-    document.getElementById('form-title').innerText = "➕ Nuevo Registro";
+    document.getElementById('nombre-item').value = ""; document.getElementById('sala-item').value = "";
+    document.getElementById('hora-item').value = ""; document.getElementById('hora-item-rec').value = "";
+    document.getElementById('fecha-item').value = ""; document.getElementById('form-title').innerText = "🌸 Registrar Actividad";
     document.getElementById('btn-cancelar').style.display = 'none';
-};
-document.getElementById('btn-cancelar').onclick = window.cancelarEdicion;
+}
 
 window.eliminar = (id, tipo) => {
-    if(!confirm("¿Borrar?")) return;
-    if (tipo === 'clase') db.clases = db.clases.filter(i => i.id != id);
-    else db.recordatorios = db.recordatorios.filter(i => i.id != id);
-    localStorage.setItem('agenda_usach_v4', JSON.stringify(db));
-    renderizar();
+    if(confirm("¿Borrar?")) {
+        if(tipo === 'clase') db.clases = db.clases.filter(i => i.id != id);
+        else db.recordatorios = db.recordatorios.filter(i => i.id != id);
+        save(); renderizar(); showToast("Eliminado 🗑️");
+    }
 };
 
-// VISTAS Y RENDER
-window.cambiarVista = (v) => {
-    vistaActual = v;
-    document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
-    document.getElementById('btn-'+v).classList.add('active');
-    renderizar();
-};
+function save() { localStorage.setItem('agenda_usach_v12', JSON.stringify(db)); }
+window.cambiarVista = (v) => { vistaActual = v; renderizar(); };
 
 function renderizar() {
-    const cont = document.getElementById('lista-clases');
-    const hoy = new Date().getDay() || 7;
-    const nDia = (n) => ["", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"][n];
+    const listC = document.getElementById('lista-clases');
+    const hoy = new Date().getDay(); // 0=domingo, 1=lunes...
+    const nDia = (n) => ["Domingo", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado"][n];
 
-    let html = "";
-    if (vistaActual === 'dia') {
-        const items = db.clases.filter(c => c.dia == hoy);
-        html = `<div class="dia-header">Hoy</div>` + genRows(items);
-    } else if (vistaActual === 'semana') {
-        for(let i=1; i<=6; i++){
-            const d = db.clases.filter(c => c.dia == i);
-            if(d.length) html += `<div class="dia-header">${nDia(i)}</div>` + genRows(d);
-        }
-    } else {
-        html = `<div class="dia-header">Semestre</div>` + genRows(db.clases.sort((a,b)=>a.dia-b.dia), true);
-    }
-    cont.innerHTML = html || "<p style='padding:10px'>Vacío</p>";
-
-    document.getElementById('lista-recordatorios').innerHTML = db.recordatorios.map(r => `
-        <div class="item-list alert-item">
-            <div><strong>${r.fecha}</strong> - ${r.nombre}</div>
-            <div class="actions">
-                <button onclick="editar(${r.id}, 'recordatorio')">✏️</button>
-                <button onclick="eliminar(${r.id}, 'recordatorio')">🗑️</button>
-            </div>
-        </div>`).join('');
-}
-
-function genRows(l, verD) {
-    const nDia = (n) => ["", "Lunes", "Martes", "Miércoles", "Jueves", "Viernes", "Sábado", "Domingo"][n];
-    return l.map(c => `
+    let clases = vistaActual === 'dia' ? db.clases.filter(c => c.dia == hoy) : db.clases;
+    listC.innerHTML = clases.sort((a,b)=>a.hora.localeCompare(b.hora)).map(c => `
         <div class="item-list">
-            <div><strong>${c.hora}</strong>: ${c.nombre} ${verD ? `<br><small>${nDia(c.dia)}</small>` : ''}</div>
-            <div class="actions">
-                <button onclick="editar(${c.id}, 'clase')">✏️</button>
-                <button onclick="eliminar(${c.id}, 'clase')">🗑️</button>
-            </div>
-        </div>`).join('');
+            <div><strong>${c.hora}</strong> - ${c.nombre} <br><small>${vistaActual==='semana' ? nDia(c.dia)+' | ' : ''}📍 ${c.sala}</small></div>
+            <div class="actions-btns"><button onclick="editar(${c.id},'clase')">✏️</button><button onclick="eliminar(${c.id},'clase')">🗑️</button></div>
+        </div>
+    `).join('') || "<p style='opacity:0.5'>Nada para hoy</p>";
+
+    document.getElementById('lista-recordatorios').innerHTML = db.recordatorios.sort((a,b)=>a.fecha.localeCompare(b.fecha)).map(r => `
+        <div class="item-list" style="border-left-color: #bbdefb">
+            <div><strong>${r.fecha}</strong> (${r.hora})<br>${r.nombre}</div>
+            <div class="actions-btns"><button onclick="editar(${r.id},'rec')">✏️</button><button onclick="eliminar(${r.id},'rec')">🗑️</button></div>
+        </div>
+    `).join('') || "<p style='opacity:0.5'>Sin eventos</p>";
 }
 
-// --- PIZARRA REINSTALADA ---
-const canvas = document.getElementById('pizarra');
-const ctx = canvas.getContext('2d');
-let dibujando = false;
+function renderNotas() { document.getElementById('notas-guardadas-container').innerHTML = db.notas.map(n => `<img src="${n}" class="img-nota-guardada">`).join(''); }
 
-const pos = (e) => {
-    const r = canvas.getBoundingClientRect();
-    const x = (e.clientX || e.touches[0].clientX) - r.left;
-    const y = (e.clientY || e.touches[0].clientY) - r.top;
-    return { x: x * (canvas.width/r.width), y: y * (canvas.height/r.height) };
-};
-
-const start = (e) => { dibujando = true; ctx.beginPath(); move(e); };
-const move = (e) => {
-    if(!dibujando) return;
-    const p = pos(e);
-    ctx.lineWidth = document.getElementById('brush-size').value;
-    ctx.strokeStyle = document.getElementById('color-picker').value;
-    ctx.lineCap = 'round'; ctx.lineTo(p.x, p.y); ctx.stroke();
-};
-
-canvas.addEventListener('mousedown', start); canvas.addEventListener('mousemove', move);
-window.addEventListener('mouseup', () => dibujando = false);
-canvas.addEventListener('touchstart', start); canvas.addEventListener('touchmove', (e) => { move(e); e.preventDefault(); });
-
-document.getElementById('btn-limpiar').onclick = () => ctx.clearRect(0,0,500,300);
-document.getElementById('btn-descargar').onclick = () => {
-    const l = document.createElement('a'); l.download = 'nota_usach.png'; l.href = canvas.toDataURL(); l.click();
-};
-
-// ALERTAS
-setInterval(() => {
-    const ahora = new Date();
-    const h = ahora.getHours().toString().padStart(2,'0') + ":" + ahora.getMinutes().toString().padStart(2,'0');
-    const f = ahora.toISOString().split('T')[0];
-    const id = f + h;
-    if (ultimaAlarmaID === id) return;
-    db.recordatorios.forEach(r => {
-        if(r.fecha === f && r.hora === h) {
-            ultimaAlarmaID = id;
-            if (Notification.permission === "granted") new Notification("🔔 Alerta USACH: " + r.nombre);
-            alert("⏰ HORA DE: " + r.nombre);
-            try { sonarAlerta(); } catch(e){}
-        }
-    });
-}, 30000);
-
-document.getElementById('btn-permiso').onclick = () => {
-    Notification.requestPermission();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    alert("Alertas y Audio activados.");
-};
-
-renderizar();
+document.getElementById('btn-permiso').onclick = () => Notification.requestPermission();
+renderizar(); renderNotas();
