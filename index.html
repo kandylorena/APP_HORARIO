@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Agenda USACH - Pro</title>
+    <title>Agenda USACH Pro</title>
     <link rel="stylesheet" href="./assets/css/styles.css">
     <link href="https://fonts.googleapis.com/css2?family=Quicksand:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
@@ -17,19 +17,19 @@
         <div class="slider-wrapper">
             <input type="range" id="grosor-pincel" min="1" max="50" value="5">
         </div>
-        <button id="btn-limpiar-fondo" title="Borrar fondo">✨</button>
+        <button id="btn-limpiar-fondo" title="Borrar fondo">🗑️</button>
     </div>
 
     <div class="app-container">
         <header class="main-header">
             <h1 class="titulo-premium">Agenda <span>USACH</span></h1>
-            <p>Pedagogía en Educación Básica</p>
-            <button id="btn-permiso" class="btn-notif">🔔 Activar Notificaciones</button>
+            <p class="subtitulo-centrado">Pedagogía en Educación Básica</p>
+            <button id="btn-permiso" class="btn-notif">🔔 Configurar Alertas</button>
         </header>
 
         <main>
             <section class="glass-card">
-                <h3 id="form-title">🌸 Registrar Actividad</h3>
+                <h3 id="form-title">🌸 Nueva Actividad</h3>
                 <input type="hidden" id="edit-id">
                 
                 <div class="form-row">
@@ -46,8 +46,6 @@
                         <option value="Psicología del Aprendizaje">
                         <option value="Taller de Práctica I">
                         <option value="Gramática y Ortografía">
-                        <option value="Ciencias Naturales">
-                        <option value="Evaluación Educativa">
                     </datalist>
                 </div>
 
@@ -66,7 +64,7 @@
                     <input type="time" id="hora-item-rec">
                 </div>
 
-                <input type="text" id="sala-item" placeholder="Sala, Lugar o Detalles" class="input-full">
+                <input type="text" id="sala-item" placeholder="Sala o Detalle adicional" class="input-full">
                 
                 <div class="form-actions">
                     <button id="btn-guardar" class="btn-save">Guardar Registro</button>
@@ -76,7 +74,7 @@
 
             <section class="glass-card">
                 <div class="header-lista">
-                    <h2>🕒 Horario Semanal</h2>
+                    <h2>🕒 Horario</h2>
                     <div class="view-selector">
                         <button onclick="cambiarVista('dia')" id="btn-dia" class="view-btn active">Hoy</button>
                         <button onclick="cambiarVista('semana')" id="btn-semana" class="view-btn">Semana</button>
@@ -86,7 +84,7 @@
             </section>
 
             <section class="glass-card">
-                <h2>📅 Pendientes y Alertas</h2>
+                <h2>📅 Pendientes</h2>
                 <div id="lista-recordatorios"></div>
             </section>
 
