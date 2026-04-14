@@ -1,43 +1,127 @@
-let db = JSON.parse(localStorage.getItem('agenda_usach_final_v3')) || { clases: [], recordatorios: [], notas: [], dibujoFondo: null };
+// --- BASE DE DATOS Y ESTADO ---
+let db = JSON.parse(localStorage.getItem('agenda_usach_v_final_total')) || { 
+    clases: [], 
+    recordatorios: [], 
+    notas: [], 
+    dibujoFondo: null 
+};
 let editandoId = null;
 let vistaActual = 'dia';
+let ultimaAlarmaEjecutada = ""; 
 
-// --- SISTEMA DE TOASTS ---
+// --- FUNCIONES DE APOYO (MENSAJES Y GUARDADO) ---
+function save() { 
+    localStorage.setItem('agenda_usach_v_final_total', JSON.stringify(db)); 
+}
+
 function showToast(txt, tipo = 'success') {
     const cont = document.getElementById('toast-container');
-    const t = document.createElement('div');
-    t.className = `toast`;
+    const t = document.createElement('div'); 
+    t.className = 'toast'; 
     if(tipo === 'error') t.style.borderLeftColor = '#ff8a80';
     t.innerText = txt;
     cont.appendChild(t);
-    setTimeout(() => { t.style.opacity = '0'; setTimeout(() => t.remove(), 300); }, 2500);
+    setTimeout(() => { 
+        t.style.opacity = '0'; 
+        setTimeout(() => t.remove(), 300); 
+    }, 2500);
 }
 
-// --- FONDO PERSISTENTE ---
+// --- PIZARRA DE FONDO (CON SOPORTE MÓVIL Y PERSISTENCIA) ---
 const canF = document.getElementById('pizarra-fondo');
 const ctxF = canF.getContext('2d');
-function resF() { 
-    canF.width = window.innerWidth; canF.height = window.innerHeight;
+
+function resF() {
+    canF.width = window.innerWidth; 
+    canF.height = window.innerHeight;
     if(db.dibujoFondo) {
-        let img = new Image();
-        img.onload = () => ctxF.drawImage(img, 0, 0);
+        let img = new Image(); 
+        img.onload = () => ctxF.drawImage(img, 0, 0); 
         img.src = db.dibujoFondo;
     }
 }
-window.addEventListener('resize', resF); resF();
+resF(); 
+window.addEventListener('resize', resF);
 
 let dibF = false;
-const getP = (e) => ({ x: e.clientX || e.touches?.[0].clientX, y: e.clientY || e.touches?.[0].clientY });
-const startF = (e) => { if(e.target.id === 'pizarra-fondo') { dibF = true; ctxF.beginPath(); const p = getP(e); ctxF.moveTo(p.x, p.y); }};
-const moveF = (e) => { if(!dibF) return; const p = getP(e); ctxF.lineWidth = document.getElementById('grosor-pincel').value; ctxF.strokeStyle = document.getElementById('color-pincel').value; ctxF.lineCap = 'round'; ctxF.lineTo(p.x, p.y); ctxF.stroke(); };
-const endF = () => { if(dibF) { dibF = false; db.dibujoFondo = canF.toDataURL(); save(); }};
+const getP = (e) => ({ 
+    x: e.clientX || (e.touches && e.touches[0].clientX), 
+    y: e.clientY || (e.touches && e.touches[0].clientY) 
+});
 
-canF.addEventListener('mousedown', startF); window.addEventListener('mousemove', moveF); window.addEventListener('mouseup', endF);
-canF.addEventListener('touchstart', startF); canF.addEventListener('touchmove', (e) => { if(dibF) { moveF(e); e.preventDefault(); } }); canF.addEventListener('touchend', endF);
+const startF = (e) => { 
+    if(e.target.id === 'pizarra-fondo') { 
+        dibF = true; ctxF.beginPath(); 
+        const p = getP(e); ctxF.moveTo(p.x, p.y); 
+    }
+};
+const moveF = (e) => {
+    if(!dibF) return;
+    const p = getP(e);
+    ctxF.lineWidth = document.getElementById('grosor-pincel').value;
+    ctxF.strokeStyle = document.getElementById('color-pincel').value;
+    ctxF.lineCap = 'round'; ctxF.lineTo(p.x, p.y); ctxF.stroke();
+};
+const endF = () => { 
+    if(dibF) { 
+        dibF = false; 
+        db.dibujoFondo = canF.toDataURL(); 
+        save(); 
+    }
+};
 
-document.getElementById('btn-limpiar-fondo').onclick = () => { if(confirm("¿Borrar fondo?")) { ctxF.clearRect(0,0,canF.width, canF.height); db.dibujoFondo = null; save(); showToast("Fondo limpio 🗑️"); }};
+canF.addEventListener('mousedown', startF); 
+window.addEventListener('mousemove', moveF); 
+window.addEventListener('mouseup', endF);
+canF.addEventListener('touchstart', startF); 
+canF.addEventListener('touchmove', (e) => { if(dibF) { moveF(e); e.preventDefault(); } }); 
+canF.addEventListener('touchend', endF);
 
-// --- AGENDA LOGICA ---
+document.getElementById('btn-limpiar-fondo').onclick = () => {
+    if(confirm("¿Borrar todo el dibujo del fondo?")) {
+        ctxF.clearRect(0,0,canF.width, canF.height);
+        db.dibujoFondo = null; save(); showToast("Fondo limpio 🗑️");
+    }
+};
+
+// --- PIZARRA DE NOTAS PEQUEÑA (MÓVIL FIX) ---
+const canN = document.getElementById('pizarra-notas');
+const ctxN = canN.getContext('2d');
+canN.width = canN.offsetWidth; canN.height = 200;
+
+let dibN = false;
+const getPN = (e) => {
+    let rect = canN.getBoundingClientRect();
+    let x = (e.clientX || (e.touches && e.touches[0].clientX)) - rect.left;
+    let y = (e.clientY || (e.touches && e.touches[0].clientY)) - rect.top;
+    return { x, y };
+};
+
+const startN = (e) => { dibN = true; ctxN.beginPath(); const p = getPN(e); ctxN.moveTo(p.x, p.y); };
+const moveN = (e) => { 
+    if(!dibN) return; 
+    const p = getPN(e); 
+    ctxN.strokeStyle = document.getElementById('color-pincel').value; 
+    ctxN.lineWidth = 3; ctxN.lineCap = 'round';
+    ctxN.lineTo(p.x, p.y); ctxN.stroke(); 
+};
+
+canN.addEventListener('mousedown', startN); 
+canN.addEventListener('mousemove', moveN); 
+window.addEventListener('mouseup', () => dibN = false);
+canN.addEventListener('touchstart', startN); 
+canN.addEventListener('touchmove', (e) => { moveN(e); e.preventDefault(); });
+
+document.getElementById('btn-pizarra-texto').onclick = () => {
+    const t = prompt("Escribe:"); 
+    if(t) { ctxN.font="bold 20px Quicksand"; ctxN.fillStyle="#455a64"; ctxN.fillText(t, 20, 50); }
+};
+document.getElementById('btn-pizarra-borrar').onclick = () => ctxN.clearRect(0,0,canN.width, canN.height);
+document.getElementById('btn-pizarra-guardar').onclick = () => { 
+    db.notas.push(canN.toDataURL()); save(); renderNotas(); showToast("Nota guardada 💾"); 
+};
+
+// --- AGENDA USACH ---
 const tSel = document.getElementById('item-tipo-registro');
 tSel.onchange = () => {
     const isC = tSel.value === 'clase';
@@ -61,7 +145,7 @@ document.getElementById('btn-guardar').onclick = () => {
     if(editandoId) {
         db.clases = db.clases.filter(i => i.id !== editandoId);
         db.recordatorios = db.recordatorios.filter(i => i.id !== editandoId);
-        showToast("¡Registro actualizado! ✨");
+        showToast("Registro actualizado ✨");
     } else {
         showToast("¡Guardado con éxito! 🌸");
     }
@@ -116,19 +200,19 @@ window.cambiarVista = (v) => {
 
 function renderizar() {
     const listC = document.getElementById('lista-clases');
-    const hoy = new Date().getDay(); // 0 domingo, 1 lunes...
+    const hoy = new Date().getDay(); 
     const nDia = (n) => ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"][n];
 
     let clases = vistaActual === 'dia' ? db.clases.filter(c => c.dia == hoy) : db.clases;
     listC.innerHTML = clases.sort((a,b)=>a.hora.localeCompare(b.hora)).map(c => `
         <div class="item-list">
-            <div><strong>${c.hora}</strong> - ${c.nombre} <br><small>${vistaActual==='semana'?nDia(c.dia)+' | ':''}📍 ${c.sala}</small></div>
+            <div><strong>${c.hora}</strong> - ${c.nombre} <br><small>📍 ${c.sala} ${vistaActual==='semana'?' | '+nDia(c.dia):''}</small></div>
             <div class="actions-btns">
                 <button onclick="editar(${c.id},'clase')">✏️</button>
                 <button onclick="eliminar(${c.id},'clase')">🗑️</button>
             </div>
         </div>
-    `).join('') || "<p style='opacity:0.5'>Sin clases</p>";
+    `).join('') || "<p style='opacity:0.5'>Nada hoy</p>";
 
     document.getElementById('lista-recordatorios').innerHTML = db.recordatorios.sort((a,b)=>a.fecha.localeCompare(b.fecha)).map(r => `
         <div class="item-list" style="border-left-color: #bbdefb">
@@ -141,31 +225,39 @@ function renderizar() {
     `).join('') || "<p style='opacity:0.5'>Sin pendientes</p>";
 }
 
-// --- ALARMAS ---
+function renderNotas() { 
+    document.getElementById('notas-guardadas-container').innerHTML = db.notas.map(n => `<img src="${n}" class="img-nota-guardada">`).join(''); 
+}
+
+// --- ALARMAS REFORZADAS ---
 setInterval(() => {
     const ahora = new Date();
-    const h = ahora.getHours().toString().padStart(2,'0') + ":" + ahora.getMinutes().toString().padStart(2,'0');
-    const f = ahora.toISOString().split('T')[0];
+    const hActual = ahora.getHours().toString().padStart(2, '0') + ":" + ahora.getMinutes().toString().padStart(2, '0');
+    const fActual = ahora.toISOString().split('T')[0];
+
+    if (ultimaAlarmaEjecutada === hActual) return;
+
     db.recordatorios.forEach(r => {
-        if(r.fecha === f && r.hora === h) {
-            if(Notification.permission === "granted") new Notification("¡Agenda USACH!", { body: r.nombre });
-            alert("⏰ RECORDATORIO: " + r.nombre);
+        if (r.fecha === fActual && r.hora === hActual) {
+            ejecutarAlarma(r.nombre);
+            ultimaAlarmaEjecutada = hActual;
         }
     });
-}, 60000);
+}, 1000);
 
-function save() { localStorage.setItem('agenda_usach_final_v3', JSON.stringify(db)); }
-document.getElementById('btn-permiso').onclick = () => Notification.requestPermission();
+function ejecutarAlarma(titulo) {
+    if (Notification.permission === "granted") {
+        new Notification("📌 USACH: Pendiente", { body: titulo });
+    }
+    showToast("⏰ ¡ALARMA!: " + titulo, "error");
+    alert("⏰ RECORDATORIO: " + titulo);
+}
 
-// Pizarra notas fix
-const canN = document.getElementById('pizarra-notas');
-const ctxN = canN.getContext('2d');
-canN.width = canN.offsetWidth; canN.height = 200;
-let dibN = false;
-canN.onmousedown = (e) => { dibN=true; ctxN.beginPath(); ctxN.moveTo(e.offsetX, e.offsetY); };
-canN.onmousemove = (e) => { if(dibN) { ctxN.strokeStyle=document.getElementById('color-pincel').value; ctxN.lineTo(e.offsetX, e.offsetY); ctxN.stroke(); }};
-window.addEventListener('mouseup', () => dibN=false);
-document.getElementById('btn-pizarra-guardar').onclick = () => { db.notas.push(canN.toDataURL()); save(); renderNotas(); showToast("Nota guardada 💾"); };
-function renderNotas() { document.getElementById('notas-guardadas-container').innerHTML = db.notas.map(n => `<img src="${n}" class="img-nota-guardada">`).join(''); }
+document.getElementById('btn-permiso').onclick = () => {
+    Notification.requestPermission().then(perm => {
+        if (perm === "granted") showToast("🔔 Notificaciones activadas");
+        else showToast("⚠️ Permiso denegado", "error");
+    });
+};
 
 renderizar(); renderNotas();

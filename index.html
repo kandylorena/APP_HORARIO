@@ -31,24 +31,20 @@
             <section class="glass-card">
                 <h3 id="form-title">🌸 Nueva Actividad</h3>
                 <input type="hidden" id="edit-id">
-                
                 <div class="form-row">
                     <select id="item-tipo-registro">
                         <option value="clase">Clase Semanal</option>
                         <option value="recordatorio">Evento / Examen / Tarea</option>
                     </select>
                 </div>
-
                 <div class="form-row">
-                    <input type="text" id="nombre-item" list="materias-sugeridas" placeholder="Escribe el nombre aquí...">
+                    <input type="text" id="nombre-item" list="materias-sugeridas" placeholder="Nombre de materia o evento...">
                     <datalist id="materias-sugeridas">
                         <option value="Pensamiento Matemático I">
                         <option value="Psicología del Aprendizaje">
                         <option value="Taller de Práctica I">
-                        <option value="Gramática y Ortografía">
                     </datalist>
                 </div>
-
                 <div id="campos-clase" class="form-grid">
                     <select id="dia-semana">
                         <option value="1">Lunes</option><option value="2">Martes</option>
@@ -58,17 +54,14 @@
                     </select>
                     <input type="time" id="hora-item">
                 </div>
-
                 <div id="campos-recordatorio" class="form-grid" style="display:none;">
                     <input type="date" id="fecha-item">
                     <input type="time" id="hora-item-rec">
                 </div>
-
-                <input type="text" id="sala-item" placeholder="Sala o Detalle adicional" class="input-full">
-                
+                <input type="text" id="sala-item" placeholder="Sala o Detalle" class="input-full">
                 <div class="form-actions">
                     <button id="btn-guardar" class="btn-save">Guardar Registro</button>
-                    <button id="btn-cancelar" class="btn-cancel" style="display:none;">Cancelar Edición</button>
+                    <button id="btn-cancelar" class="btn-cancel" style="display:none;">Cancelar</button>
                 </div>
             </section>
 
@@ -91,9 +84,9 @@
             <section class="glass-card">
                 <h3>📝 Pizarra de Notas</h3>
                 <div class="canvas-tools">
-                    <button class="btn-pastel-sm" id="btn-pizarra-texto">⌨️ Texto</button>
-                    <button class="btn-pastel-sm" id="btn-pizarra-borrar">🧹 Limpiar</button>
-                    <button class="btn-pastel-sm" id="btn-pizarra-guardar">💾 Guardar</button>
+                    <button type="button" class="btn-tool" id="btn-pizarra-texto">⌨️ Texto</button>
+                    <button type="button" class="btn-tool" id="btn-pizarra-borrar">🧹 Limpiar</button>
+                    <button type="button" class="btn-tool" id="btn-pizarra-guardar">💾 Guardar</button>
                 </div>
                 <canvas id="pizarra-notas"></canvas>
                 <div id="notas-guardadas-container" class="notas-grid"></div>
